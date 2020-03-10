@@ -26,11 +26,8 @@ def initialize(request):
 # @csrf_exempt
 @api_view(["POST"])
 def move(request):
-    dirs={"n": "north", "s": "south", "e": "east", "w": "west"}
-    reverse_dirs = {"n": "south", "s": "north", "e": "west", "w": "east"}
     player = request.user.player
     player_id = player.id
-    player_uuid = player.uuid
     data = json.loads(request.body)
     direction = data['direction']
     room = player.room()
@@ -48,8 +45,6 @@ def move(request):
         player.currentRoom=nextRoomID
         player.save()
         players = nextRoom.playerNames(player_id)
-        currentPlayerUUIDs = room.playerUUIDs(player_id)
-        nextPlayerUUIDs = nextRoom.playerUUIDs(player_id)
         # for p_uuid in currentPlayerUUIDs:
         #     pusher.trigger(f'p-channel-{p_uuid}', u'broadcast', {'message':f'{player.user.username} has walked {dirs[direction]}.'})
         # for p_uuid in nextPlayerUUIDs:
@@ -64,7 +59,6 @@ def move(request):
 def take_item(request):
     user = request.user
     player = user.player
-    player_id = player.id
     uuid = player.uuid
     room = player.room()
     item = request.data["item"]
@@ -126,7 +120,6 @@ def take_item(request):
 def drop_item(request):
     user = request.user
     player = user.player
-    player_id = player.id
     uuid = player.uuid
     room = player.room()
     item = request.data["item"]
