@@ -59,6 +59,115 @@ def move(request):
         players = room.playerNames(player_id)
         return JsonResponse({'name':player.user.username, 'title':room.title, 'description':room.description, 'players':players, 'error_msg':"You cannot move that way."}, safe=True)
 
+@csrf_exempt
+@api_view(["POST"])
+def take_item(request):
+    user = request.user
+    player = user.player
+    player_id = player.id
+    uuid = player.uuid
+    room = player.room()
+    item = request.data["item"]
+    player_obj = model_to_dict(player)
+    player_obj['room'] = model_to_dict(Room.objects.get(id=player.currentRoom))
+    player_obj['username'] = user.username
+    if item in player.inventory:
+        return JsonResponse(
+            {
+                "uuid": uuid,
+                "name": player.user.username,
+                "title": room.title,
+                "description": room.description,
+                "inventory": player.inventory,
+                "room_items": room.items,
+                "message": "You've already got one of those!",
+                "player": player_obj
+            },
+            safe=True,
+        )
+    if item in room.items:
+        room.items.remove(item)
+        room.save()
+        player.inventory.append(item)
+        player.save()
+        player_obj = model_to_dict(player)
+        player_obj['room'] = model_to_dict(Room.objects.get(id=player.currentRoom))
+        player_obj['username'] = user.username
+        return JsonResponse(
+            {
+                "uuid": uuid,
+                "name": player.user.username,
+                "title": room.title,
+                "description": room.description,
+                "inventory": player.inventory,
+                "room_items": room.items,
+                "message": "",
+                "player": player_obj
+            },
+            safe=True,
+        )
+    return JsonResponse(
+        {
+            "uuid": uuid,
+            "name": player.user.username,
+            "title": room.title,
+            "description": room.description,
+            "inventory": player.inventory,
+            "room_items": room.items,
+            "message": "Something went wrong picking up that item",
+            "player": player_obj
+        },
+        safe=True,
+    )
+
+
+@csrf_exempt
+@api_view(["POST"])
+def drop_item(request):
+    user = request.user
+    player = user.player
+    player_id = player.id
+    uuid = player.uuid
+    room = player.room()
+    item = request.data["item"]
+    player_obj = model_to_dict(player)
+    player_obj['room'] = model_to_dict(Room.objects.get(id=player.currentRoom))
+    player_obj['username'] = user.username
+    if item in player.inventory:
+        player.inventory.remove(item)
+        player.save()
+        room.items.append(item)
+        room.save()
+        player_obj = model_to_dict(player)
+        player_obj['room'] = model_to_dict(Room.objects.get(id=player.currentRoom))
+        player_obj['username'] = user.username
+        return JsonResponse(
+            {
+                "uuid": uuid,
+                "name": player.user.username,
+                "title": room.title,
+                "description": room.description,
+                "inventory": player.inventory,
+                "room_items": room.items,
+                "message": "",
+                "player": player_obj
+            },
+            safe=True,
+        )
+    else:
+        return JsonResponse(
+            {
+                "uuid": uuid,
+                "name": player.user.username,
+                "title": room.title,
+                "description": room.description,
+                "inventory": player.inventory,
+                "room_items": room.items,
+                "message": "Something went wrong dropping that item",
+                "player": player_obj
+            },
+            safe=True,
+        )
 
 @csrf_exempt
 @api_view(["POST"])
